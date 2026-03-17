@@ -1,53 +1,13 @@
-import math
-from asyncio.windows_events import NULL
-from email.policy import default
-
 import pandas as pd
-import scipy as sp
-import numpy as np
 import matplotlib.pyplot as plt
 
-file_path = r"C:\Users\becke\Downloads\useful databases\secondTest.csv" ##first test set had commas so was being treated as strings
 file_path2 = r"C:\Users\becke\Downloads\useful databases\secondTestRegionSort.csv"
 # Read the CSV file into a DataFrame
-df = pd.read_csv(file_path)
 df2 = pd.read_csv(file_path2)
 
-print(df.shape)
-dftest = df.loc[:,'year ':].astype(float)
-print(dftest.info())
-##global standard deviation of the data
-print((dftest.std(axis=0, skipna=True)/dftest.mean(axis=0, skipna=True))*100)  ##scaled standard deviation as a percentage of the mean
-
-
-"""
-##average of local standard deviation
-df2test = df2.loc[:,'year ':].astype(float)
-sum=np.zeros(42)
-
-total = 0
-loc = 0
-
-while(loc<1641):
-    #print(loc)
-    counter = 1
-    while(df2test.loc[loc+counter, 'year '] >= df2test.loc[loc+counter-1, 'year ']):
-        counter+=1
-       # if counter>6: print(df2test.loc[loc+counter, 'year '],  df2test.loc[loc, 'year '])
-    #print(df2test.loc[loc:loc+counter-1, 'year '])
-    #print(df2test.loc[loc:loc+counter-1,'year ':].std(axis=0, skipna=True))
-    sum = np.nansum(np.stack((df2test.loc[loc:loc+counter-1,'year ':].std(axis=0, skipna=True), sum), axis=0), axis=0)
-    #print(counter)
-    loc = loc+counter
-    total+=1
-
-dfi = pd.DataFrame(np.round(np.divide(sum, total), 3))
-print(dfi)
-"""
 dataToPlot = df2.loc[:, 'region_name':'year '] +  df2.loc[:, 'unemployment %']
 
 fig, ax = plt.subplots(2, 2, figsize=(8, 6), constrained_layout=True)
-
 
 ax[0,0].hist(df2.loc[:, 'unemployment %'], bins=50, color='blue', edgecolor='black')#.xlabel("unemployment %")
 ax[0,0].set_title("unemployment %")
