@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import RFE
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import root_mean_squared_error
 
 file_path = r"C:\Users\becke\Downloads\useful databases\gtTurnout.csv"
 file_path2 = r"C:\Users\becke\Downloads\useful databases\secondTest.csv"
@@ -117,17 +118,25 @@ testPred = reduced_test_set
 '''
 
 
-svr_linear = SVR(kernel='linear', max_iter=1000)
+svr_linear = SVR(kernel="rbf", C= 10, epsilon= 0.01, gamma= 0.01)
 svr_linear.fit(trainPred, trainGT)
 y_pred_svr = svr_linear.predict(testPred)
 
-linReg = Ridge()
+linReg = Ridge(alpha= 10)
 linReg.fit(trainPred, trainGT)
 y_pred_linearRidge = linReg.predict(testPred)
 
-rfr = RandomForestRegressor(n_estimators=1000,random_state=42,n_jobs=-1)
+rfr = RandomForestRegressor(bootstrap= True, max_depth= 10, min_samples_leaf= 1, min_samples_split= 2, n_estimators= 100)
 rfr.fit(trainPred, trainGT)
 y_pred_forest = rfr.predict(testPred)
+
+rmse_svr = root_mean_squared_error(testGT, y_pred_svr)
+rmse_rf = root_mean_squared_error(testGT, y_pred_forest)
+rmse_ridge = root_mean_squared_error(testGT, y_pred_linearRidge)
+
+print("SVR MSE:", rmse_svr)
+print("Random Forest MSE:", rmse_rf)
+print("Ridge MSE:", rmse_ridge)
 
 trueX = np.arange(len(trainGT))
 predX = np.arange(len(testGT))
@@ -140,7 +149,7 @@ intLiney = intLinex
 
 ax[0,0].scatter(y_pred_svr, testGT, color='blue', marker='o')
 ax[0,0].scatter(intLinex, intLiney, color='red', marker='x')
-ax[0,0].set_title("SVG")
+ax[0,0].set_title("SVR")
 
 ax[0,1].scatter(y_pred_linearRidge, testGT, color='blue', marker='o')
 ax[0,1].scatter(intLinex, intLiney, color='red', marker='x')
