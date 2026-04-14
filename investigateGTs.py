@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.externals.array_api_compat import numpy
 from sklearn.impute import KNNImputer
 from sklearn.metrics import accuracy_score
 from sklearn.svm import SVR
@@ -11,6 +12,7 @@ from sklearn.decomposition import PCA
 from sklearn.feature_selection import RFE
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import root_mean_squared_error
+from scipy.stats import spearmanr
 
 file_path = r"C:\Users\becke\Downloads\useful databases\gtTurnout.csv"
 file_path2 = r"C:\Users\becke\Downloads\useful databases\secondTest.csv"
@@ -23,6 +25,7 @@ df2test = df2.loc[:,'available_seats':].astype(float)
 
 
 turnoutTable = pd.read_csv(file_path)
+print(turnoutTable.columns.values)
 turnoutTable.rename(columns={"Region Code": "Region Code"}, inplace=True)
 turnoutTable.rename(columns={"Year": "Year"}, inplace=True)
 turnouts = turnoutTable.loc[:,'Turnout'].astype(float)
@@ -75,10 +78,26 @@ def mySplit(datap, gt, ratio):
 
 pca = PCA(n_components=3)
 pcs = pca.fit_transform(scaled_data)
-print(pcs.shape)
+'''
+loadings = pd.DataFrame(
+    pca.components_,
+    columns=preds.columns.values,
+    index=[f"PC{i+1}" for i in range(pca.n_components_)]
+)
+'''
+'''
+print("PCA Component Loadings (importance of each feature in each PC):")
+print(loadings)
+'''
+'''
+print("\nTop contributing features per principal component:")
+for pc in loadings.index:
+    sorted_features = loadings.loc[pc].abs().sort_values(ascending=False)
+    print(f"{pc}: {', '.join(sorted_features.index)}")
+
 
 #print(trainPred.shape)
-'''
+
 PC_values = np.arange(pca.n_components_) + 1
 plt.plot(PC_values, pca.explained_variance_ratio_, 'o-', linewidth=2, color='blue')
 plt.title('Scree Plot')
@@ -116,7 +135,7 @@ for i in range(len(rfe.support_)):
 trainPred = reduced_train_set
 testPred = reduced_test_set
 '''
-
+print("train")
 
 svr_linear = SVR(kernel="rbf", C= 10, epsilon= 0.01, gamma= 0.01)
 svr_linear.fit(trainPred, trainGT)
@@ -159,3 +178,21 @@ ax[1,0].scatter(y_pred_forest, testGT, color='blue', marker='o')
 ax[1,0].scatter(intLinex, intLiney, color='red', marker='x')
 ax[1,0].set_title("Random Forest")
 plt.show()
+
+npsvr = np.array(y_pred_svr)
+nprfr = np.array(y_pred_forest)
+nplin = np.array(y_pred_linearRidge)
+
+nptrue = np.array(testGT)
+
+print("svr spearmans rho, p: ")
+rho, p = spearmanr(npsvr, nptrue)
+print(rho, p)
+
+print("rfr spearmans rho, p: ")
+rho, p = spearmanr(nprfr, nptrue)
+print(rho, p)
+
+print("ridge spearmans rho, p: ")
+rho, p = spearmanr(nplin, nptrue)
+print(rho, p)
