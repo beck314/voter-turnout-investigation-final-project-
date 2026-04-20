@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+import matplotlib.transforms as mtransforms
 from sklearn.externals.array_api_compat import numpy
 from sklearn.impute import KNNImputer
 from sklearn.metrics import accuracy_score
@@ -105,6 +107,7 @@ plt.xlabel('Principal Component')
 plt.ylabel('Variance Explained')
 plt.show()
 '''
+trainPredFull, testPredFull, trainGTFull, testGTFull = mySplit(scaled_data, gts, 0.7)
 trainPred, testPred, trainGT, testGT = mySplit(pcs, gts, 0.7)
 print(trainPred.shape, trainGT.shape)
 print(testPred.shape, testGT.shape)
@@ -138,16 +141,16 @@ testPred = reduced_test_set
 print("train")
 
 svr_linear = SVR(kernel="rbf", C= 10, epsilon= 0.01, gamma= 0.01)
-svr_linear.fit(trainPred, trainGT)
-y_pred_svr = svr_linear.predict(testPred)
+svr_linear.fit(trainPredFull, trainGTFull)
+y_pred_svr = svr_linear.predict(testPredFull)
 
 linReg = Ridge(alpha= 10)
-linReg.fit(trainPred, trainGT)
-y_pred_linearRidge = linReg.predict(testPred)
+linReg.fit(trainPredFull, trainGTFull)
+y_pred_linearRidge = linReg.predict(testPredFull)
 
 rfr = RandomForestRegressor(bootstrap= True, max_depth= 10, min_samples_leaf= 1, min_samples_split= 2, n_estimators= 100)
-rfr.fit(trainPred, trainGT)
-y_pred_forest = rfr.predict(testPred)
+rfr.fit(trainPredFull, trainGTFull)
+y_pred_forest = rfr.predict(testPredFull)
 
 rmse_svr = root_mean_squared_error(testGT, y_pred_svr)
 rmse_rf = root_mean_squared_error(testGT, y_pred_forest)
@@ -162,21 +165,37 @@ predX = np.arange(len(testGT))
 
 fig, ax = plt.subplots(2, 2, figsize=(8, 6))
 
-intLinex = np.arange(0.25,0.45,0.01)
+intLinex = [0,0.5,1]
 intLiney = intLinex
 
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
 
 ax[0,0].scatter(y_pred_svr, testGT, color='blue', marker='o')
-ax[0,0].scatter(intLinex, intLiney, color='red', marker='x')
+ax[0,0].add_line(line)
 ax[0,0].set_title("SVR")
+ax[0,0].set_ylabel("True Values")
+ax[0,0].set_xlabel("Predicted Values")
+ax[0,0].legend()
+
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
 
 ax[0,1].scatter(y_pred_linearRidge, testGT, color='blue', marker='o')
-ax[0,1].scatter(intLinex, intLiney, color='red', marker='x')
+ax[0,1].add_line(line)
 ax[0,1].set_title("Linear Ridge")
+ax[0,1].set_ylabel("True Values")
+ax[0,1].set_xlabel("Predicted Values")
+ax[0,1].legend()
+
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
 
 ax[1,0].scatter(y_pred_forest, testGT, color='blue', marker='o')
-ax[1,0].scatter(intLinex, intLiney, color='red', marker='x')
+ax[1,0].add_line(line)
 ax[1,0].set_title("Random Forest")
+ax[1,0].set_ylabel("True Values")
+ax[1,0].set_xlabel("Predicted Values")
+ax[1,0].legend()
+
+plt.tight_layout(pad=2)
 plt.show()
 
 npsvr = np.array(y_pred_svr)

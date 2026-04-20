@@ -17,10 +17,11 @@ total = 0
 loc = 0
 
 
-print(df2test.info())
+#print(df2test.info())
 ##global standard deviation of the data
-print((df2test.std(axis=0, skipna=True)/df2test.mean(axis=0, skipna=True))*100)  ##scaled standard deviation as a percentage of the mean
+print((df2test.std(axis=0, skipna=True)/df2test.mean(axis=0, skipna=True))*100)
 
+##scaled standard deviation as a percentage of the mean
 while(loc<1641):
     #print(loc)
     counter = 1

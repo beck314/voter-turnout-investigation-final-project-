@@ -2,10 +2,12 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.decomposition import PCA
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import KNNImputer, SimpleImputer
+from sklearn.linear_model import Ridge
 from sklearn.metrics import root_mean_squared_error
 from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
+import matplotlib.lines as mlines
 from sklearn.svm import SVR
 
 file_path = r"C:\Users\becke\Downloads\useful databases\gtTurnout.csv"
@@ -86,24 +88,73 @@ metroReduced = pca.fit_transform(metroScaled)
 districtReduced = pca.fit_transform(districtScaled)
 countiesReduced = pca.fit_transform(countiesScaled)
 
-metTrainP, metTestP, metTrainT, metTestT = mySplit(metroReduced, metroTargets.loc[:,"Turnout"], ratio=0.7)
-districtTrainP, districtTestP, districtTrainT, districtTestT = mySplit(districtReduced, unitary_districtTargets.loc[:,"Turnout"], ratio=0.7)
-countiesTrainP, countiesTestP, countiesTrainT, countiesTestT = mySplit(countiesReduced, countiesTargets.loc[:,"Turnout"], ratio=0.7)
+metTrainP, metTestP, metTrainT, metTestT = mySplit(metroScaled, metroTargets.loc[:,"Turnout"], ratio=0.7)
+districtTrainP, districtTestP, districtTrainT, districtTestT = mySplit(districtScaled, unitary_districtTargets.loc[:,"Turnout"], ratio=0.7)
+countiesTrainP, countiesTestP, countiesTrainT, countiesTestT = mySplit(countiesScaled, countiesTargets.loc[:,"Turnout"], ratio=0.7)
 
 print(countiesTrainP.shape)
 print(countiesTestP.shape)
 print(countiesTrainT.shape)
 print(countiesTestT.shape)
 
-'''
-pipeline.fit(metTrainP, metTrainT)
-print(pipeline.score(metTestP, metTestT))
-'''
 
 svr = SVR(kernel="rbf", C= 10, epsilon= 0.01, gamma= 0.01)
+ridge = Ridge(alpha=10)
+rfr = RandomForestRegressor(bootstrap= True, max_depth= 10, min_samples_leaf= 1, min_samples_split= 2, n_estimators= 100)
+
+
+
+rfr.fit(metTrainP, metTrainT)
+metPreds = rfr.predict(metTestP)
+
+rfr.fit(districtTrainP, districtTrainT)
+districtPreds = rfr.predict(districtTestP)
+
+rfr.fit(countiesTrainP, countiesTrainT)
+countiesPreds = rfr.predict(countiesTestP)
+
+print("metropolitan rmse: ")
+print(root_mean_squared_error(metPreds, metTestT))
+print("unitary/district rmse: ")
+print(root_mean_squared_error(districtPreds, districtTestT))
+print("counties rmse: ")
+print(root_mean_squared_error(countiesPreds, countiesTestT))
+
+fig, ax = plt.subplots(2, 2, figsize=(8, 6))
+fig.suptitle("Random Forest Regressor", fontsize=20)
+
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
+
+ax[0,0].scatter(metPreds, metTestT, color='blue', marker='o')
+ax[0,0].add_line(line)
+ax[0,0].set_title("Metropolitan")
+ax[0,0].set_xlabel("prediction")
+ax[0,0].set_ylabel("target")
+ax[0,0].legend()
+
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
+
+ax[0,1].scatter(districtPreds, districtTestT, color='blue', marker='o')
+ax[0,1].add_line(line)
+ax[0,1].set_title("Unitary/District")
+ax[0,1].set_xlabel("prediction")
+ax[0,1].set_ylabel("target")
+ax[0,1].legend()
+
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
+
+ax[1,0].scatter(countiesPreds, countiesTestT, color='blue', marker='o')
+ax[1,0].add_line(line)
+ax[1,0].set_title("Counties")
+ax[1,0].set_xlabel("prediction")
+ax[1,0].set_ylabel("target")
+ax[1,0].legend()
+
+plt.tight_layout(pad=2)
+plt.show()
+
 svr.fit(metTrainP, metTrainT)
 metPreds = svr.predict(metTestP)
-countiesPredsL = svr.predict(countiesTestP)
 
 svr.fit(districtTrainP, districtTrainT)
 districtPreds = svr.predict(districtTestP)
@@ -117,33 +168,86 @@ print("unitary/district rmse: ")
 print(root_mean_squared_error(districtPreds, districtTestT))
 print("counties rmse: ")
 print(root_mean_squared_error(countiesPreds, countiesTestT))
-print("countiesP rmse: ")
-print(root_mean_squared_error(countiesPredsL, countiesTestT))
-
 
 fig, ax = plt.subplots(2, 2, figsize=(8, 6))
+fig.suptitle("Support Vector Regressor", fontsize=20)
 
-intLinex = np.arange(0.25,0.45,0.01)
-intLiney = intLinex
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
 
 ax[0,0].scatter(metPreds, metTestT, color='blue', marker='o')
-ax[0,0].scatter(intLinex, intLiney, color='red', marker='x')
+ax[0,0].add_line(line)
 ax[0,0].set_title("Metropolitan")
 ax[0,0].set_xlabel("prediction")
 ax[0,0].set_ylabel("target")
+ax[0,0].legend()
+
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
 
 ax[0,1].scatter(districtPreds, districtTestT, color='blue', marker='o')
-ax[0,1].scatter(intLinex, intLiney, color='red', marker='x')
+ax[0,1].add_line(line)
 ax[0,1].set_title("Unitary/District")
 ax[0,1].set_xlabel("prediction")
 ax[0,1].set_ylabel("target")
+ax[0,1].legend()
 
-ax[1,0].scatter(countiesPredsL, countiesTestT, color='blue', marker='o')
-ax[1,0].scatter(intLinex, intLiney, color='red', marker='x')
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
+
+ax[1,0].scatter(countiesPreds, countiesTestT, color='blue', marker='o')
+ax[1,0].add_line(line)
 ax[1,0].set_title("Counties")
 ax[1,0].set_xlabel("prediction")
 ax[1,0].set_ylabel("target")
+ax[1,0].legend()
 
-
+plt.tight_layout(pad=2)
 plt.show()
 
+
+ridge.fit(metTrainP, metTrainT)
+metPreds = ridge.predict(metTestP)
+
+ridge.fit(districtTrainP, districtTrainT)
+districtPreds = ridge.predict(districtTestP)
+
+ridge.fit(countiesTrainP, countiesTrainT)
+countiesPreds = ridge.predict(countiesTestP)
+
+print("metropolitan rmse: ")
+print(root_mean_squared_error(metPreds, metTestT))
+print("unitary/district rmse: ")
+print(root_mean_squared_error(districtPreds, districtTestT))
+print("counties rmse: ")
+print(root_mean_squared_error(countiesPreds, countiesTestT))
+
+fig, ax = plt.subplots(2, 2, figsize=(8, 6))
+fig.suptitle("Ridge Regressor", fontsize=20)
+
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
+
+ax[0,0].scatter(metPreds, metTestT, color='blue', marker='o')
+ax[0,0].add_line(line)
+ax[0,0].set_title("Metropolitan")
+ax[0,0].set_xlabel("prediction")
+ax[0,0].set_ylabel("target")
+ax[0,0].legend()
+
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
+
+ax[0,1].scatter(districtPreds, districtTestT, color='blue', marker='o')
+ax[0,1].add_line(line)
+ax[0,1].set_title("Unitary/District")
+ax[0,1].set_xlabel("prediction")
+ax[0,1].set_ylabel("target")
+ax[0,1].legend()
+
+line = mlines.Line2D([0.225, 0.45], [0.225, 0.45], color='red', label='y=x')
+
+ax[1,0].scatter(countiesPreds, countiesTestT, color='blue', marker='o')
+ax[1,0].add_line(line)
+ax[1,0].set_title("Counties")
+ax[1,0].set_xlabel("prediction")
+ax[1,0].set_ylabel("target")
+ax[1,0].legend()
+
+plt.tight_layout(pad=2)
+plt.show()
